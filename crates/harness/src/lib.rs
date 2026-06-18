@@ -9,7 +9,7 @@
 //!
 //! - [`Harness`] trait: the adjudication interface (implement for custom backends).
 //! - [`CedarPolicyHarness`]: production implementation backed by Cedar, YARA-X
-//!   signature scanning, Ollama-based data classification, and policy evaluation.
+//!   signature scanning, Anthropic-based data classification, and policy evaluation.
 //! - [`rpc`]: tarpc IPC layer — the harness server exposes adjudication over
 //!   Unix domain sockets so hook processes can call it without linking the
 //!   full engine.

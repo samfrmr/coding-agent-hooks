@@ -17,17 +17,13 @@ struct Cli {
     #[arg(short, long, default_value = "policies/policies.toml")]
     policies: PathBuf,
 
-    /// Ollama host URL.
-    #[arg(long, default_value = "http://localhost")]
-    host: String,
-
-    /// Ollama port.
-    #[arg(long, default_value_t = 11434)]
-    port: u16,
-
-    /// Model name.
-    #[arg(long, default_value = "gpt-oss-safeguard:20b")]
+    /// Anthropic model id.
+    #[arg(long, default_value = "claude-haiku-4-5")]
     model: String,
+
+    /// API base URL (overrides ANTHROPIC_BASE_URL).
+    #[arg(long)]
+    base_url: Option<String>,
 
     /// Output raw JSON instead of a pretty report.
     #[arg(long)]
@@ -65,12 +61,14 @@ async fn main() {
         }
     };
 
-    let config = PolicyModelConfig {
-        host: cli.host,
-        port: cli.port,
+    let mut config = PolicyModelConfig {
         model: cli.model,
         temperature: 0.0,
+        ..PolicyModelConfig::default()
     };
+    if let Some(base_url) = cli.base_url {
+        config.base_url = base_url;
+    }
 
     let model = PolicyModel::with_config(policies, config);
 

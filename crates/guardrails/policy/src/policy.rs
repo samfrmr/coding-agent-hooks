@@ -30,15 +30,13 @@ pub struct PolicyExample {
     pub category: String,
 }
 
-/// A policy template following the gpt-oss-safeguard Harmony prompt format
+/// A policy template following the safeguard Harmony prompt format
 /// with multi-category severity tiers.
 ///
 /// Each template defines a set of [`PolicyCategory`] tiers. The model evaluates
 /// content and returns a policy-referencing output with `violation` (0 or 1)
 /// and `policy_category` indicating which tier applies.
 /// The `{prefix}0` category is always the safe / compliant tier.
-///
-/// See: <https://developers.openai.com/cookbook/articles/gpt-oss-safeguard-guide>
 ///
 /// # Example
 ///

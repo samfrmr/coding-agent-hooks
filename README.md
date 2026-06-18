@@ -30,16 +30,19 @@ cargo --version
 
 The YARA signature engine and Cedar policies work without any external
 dependencies. The LLM-based classifiers (data sensitivity and secure code
-policy) require [Ollama](https://ollama.com/) with the `gpt-oss-safeguard-20b`
-model:
+policy) call the [Anthropic API](https://www.anthropic.com/) (default model
+`claude-haiku-4-5`) and require an API key. The harness reads `ANTHROPIC_API_KEY`
+from `~/.sondera/env` (or the environment) and needs network egress to
+`api.anthropic.com`:
 
 ```bash
-# Install Ollama — see https://ollama.com/download for other platforms
-brew install ollama
-
-# Pull the model (~12 GB)
-ollama pull gpt-oss-safeguard
+# Add your key to the sondera env file (loaded by the harness/hooks at startup)
+mkdir -p ~/.sondera
+echo 'ANTHROPIC_API_KEY=sk-ant-...' >> ~/.sondera/env
 ```
+
+Override the model or endpoint per classifier via config, or point at a proxy
+with `ANTHROPIC_BASE_URL`.
 
 ### 1. Start the harness server
 
@@ -143,8 +146,8 @@ which coordinates three guardrail subsystems:
 
 1. **Signature Engine** (YARA-X) — pattern-matches tool inputs/outputs for prompt injection, data exfiltration, secrets,
    and obfuscation.
-2. **Policy Model** (gpt-oss-safeguard-20b via Ollama) — classifies content against secure code generation categories.
-3. **Information Flow Control** (gpt-oss-safeguard-20b via Ollama) — assigns sensitivity labels for data classification.
+2. **Policy Model** (`claude-haiku-4-5` via the Anthropic API) — classifies content against secure code generation categories.
+3. **Information Flow Control** (`claude-haiku-4-5` via the Anthropic API) — assigns sensitivity labels for data classification.
 
 The **Cedar Policy Engine** loads policies and schema fragments authored by a
 policy agent via the MCP server, combines guardrail signals with entity state

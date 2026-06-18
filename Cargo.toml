@@ -5,6 +5,7 @@ members = [
     "apps/copilot",
     "apps/cursor",
     "apps/gemini",
+    "crates/guardrails/anthropic",
     "crates/guardrails/ifc",
     "crates/guardrails/policy",
     "crates/guardrails/signature",
@@ -22,6 +23,7 @@ sondera-harness = { path = "crates/harness" }
 sondera-hooks-common = { path = "crates/common" }
 sondera-mcp = { path = "crates/mcp" }
 sondera-signature = { path = "crates/guardrails/signature" }
+sondera-anthropic = { path = "crates/guardrails/anthropic" }
 sondera-policy = { path = "crates/guardrails/policy" }
 sondera-information-flow-control = { path = "crates/guardrails/ifc" }
 

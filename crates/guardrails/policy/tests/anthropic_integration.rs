@@ -1,14 +1,11 @@
-//! Integration tests for policy evaluation against a local Ollama server.
+//! Integration tests for policy evaluation against the Anthropic API.
 //!
-//! These tests require a running Ollama instance with the `gpt-oss-safeguard:20b`
-//! model pulled.
+//! These tests make real API calls and require `ANTHROPIC_API_KEY` to be set.
+//! They are `#[ignore]`d by default so CI without a key is unaffected.
 //!
 //! To run:
-//!   cargo test -p sondera-policy --test ollama_integration
-//!
-//! Prerequisites:
-//!   ollama pull gpt-oss-safeguard:20b
-//!   ollama serve  # default: http://localhost:11434
+//!   ANTHROPIC_API_KEY=... cargo test -p sondera-policy \
+//!     --test anthropic_integration -- --ignored
 
 use sondera_policy::{
     ConversationMessage, PolicyClassification, PolicyModel, PolicyModelBuilder, PolicyTemplate,
@@ -57,7 +54,7 @@ fn assert_non_compliant(result: &PolicyClassification, expected_category: &str) 
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn injection_sql_f_string_is_violation() {
     let model = baseline_model();
     let code = r#"
@@ -70,7 +67,7 @@ def get_user(user_id):
 }
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn injection_parameterized_query_is_safe() {
     let model = baseline_model();
     let code = r#"
@@ -88,7 +85,7 @@ def get_user(user_id):
 }
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn injection_os_system_is_violation() {
     let model = baseline_model();
     let code = r#"
@@ -105,7 +102,7 @@ def ping_host(hostname):
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn secrets_hardcoded_api_key_is_violation() {
     let model = baseline_model();
     let code = r#"
@@ -118,7 +115,7 @@ response = requests.get("https://api.example.com/data", headers=headers)
 }
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn secrets_env_var_is_safe() {
     let model = baseline_model();
     let code = r#"
@@ -141,7 +138,7 @@ response = requests.get("https://api.example.com/data", headers=headers)
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn crypto_md5_password_hash_is_violation() {
     let model = baseline_model();
     let code = r#"
@@ -154,7 +151,7 @@ def hash_password(password):
 }
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn crypto_bcrypt_is_safe() {
     let model = baseline_model();
     let code = r#"
@@ -176,7 +173,7 @@ def hash_password(password):
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn deserialization_pickle_loads_is_violation() {
     let model = baseline_model();
     let code = r#"
@@ -190,7 +187,7 @@ def handle_request(request):
 }
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn deserialization_json_loads_is_safe() {
     let model = baseline_model();
     let code = r#"
@@ -213,7 +210,7 @@ def handle_request(request):
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn access_control_no_auth_delete_is_violation() {
     let model = baseline_model();
     let code = r#"
@@ -227,7 +224,7 @@ def delete_user(id):
 }
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn access_control_with_auth_is_safe() {
     let model = baseline_model();
     let code = r#"
@@ -253,7 +250,7 @@ def delete_user(id):
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn path_traversal_unsanitized_join_is_violation() {
     let model = baseline_model();
     let code = r#"
@@ -267,7 +264,7 @@ fn read_upload(user_filename: &str) -> std::io::Result<Vec<u8>> {
 }
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn path_traversal_canonicalized_is_safe() {
     let model = baseline_model();
     let code = r#"
@@ -295,7 +292,7 @@ fn read_upload(user_filename: &str) -> anyhow::Result<Vec<u8>> {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn single_policy_injection_only() {
     let policy = PolicyTemplate::new("INJECTION_CHECK", "IJ")
         .instructions(
@@ -336,7 +333,7 @@ async fn single_policy_injection_only() {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn evaluate_conversation_with_violation() {
     let model = baseline_model();
     let history = vec![
@@ -356,7 +353,7 @@ async fn evaluate_conversation_with_violation() {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-#[ignore = "requires running Ollama instance"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn baseline_compliant_code_passes_all_policies() {
     let model = baseline_model();
     let code = r#"

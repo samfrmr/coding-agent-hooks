@@ -3,11 +3,9 @@
 //! Verifies that the high-water mark label on a Trajectory entity survives
 //! multiple adjudication calls within the same harness instance.
 //!
-//! Requires Ollama running locally with the gpt-oss-safeguard model:
-//!   ollama pull gpt-oss-safeguard:20b
-//!   ollama serve
+//! Requires `ANTHROPIC_API_KEY` to be set (the classifiers call the Anthropic API).
 //!
-//! Run with: cargo test -p sondera-harness -- --ignored trajectory_label
+//! Run with: ANTHROPIC_API_KEY=... cargo test -p sondera-harness -- --ignored trajectory_label
 
 use sondera_harness::{
     Action, Actor, Agent, CedarPolicyHarness, Control, Decision, Event, Harness, Label,
@@ -63,7 +61,7 @@ fn get_trajectory(harness: &CedarPolicyHarness, trajectory_id: &str) -> Trajecto
 }
 
 /// Verify that the entity store correctly roundtrips a Trajectory with a
-/// non-default label. This test does NOT require Ollama.
+/// non-default label. This test does NOT require an API key.
 #[tokio::test]
 async fn trajectory_entity_store_roundtrip_preserves_label() {
     let (harness, _temp_dir) = load_harness().await;
@@ -86,7 +84,7 @@ async fn trajectory_entity_store_roundtrip_preserves_label() {
 }
 
 #[tokio::test]
-#[ignore = "requires Ollama running locally with gpt-oss-safeguard model"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn trajectory_label_raised_to_highly_confidential_by_pii_prompt() {
     let (harness, _temp_dir) = load_harness().await;
     let trajectory_id = format!("test-ifc-{}", uuid::Uuid::new_v4());
@@ -126,7 +124,7 @@ async fn trajectory_label_raised_to_highly_confidential_by_pii_prompt() {
 }
 
 #[tokio::test]
-#[ignore = "requires Ollama running locally with gpt-oss-safeguard model"]
+#[ignore = "requires ANTHROPIC_API_KEY"]
 async fn trajectory_label_persists_across_adjudications() {
     let (harness, _temp_dir) = load_harness().await;
     let trajectory_id = format!("test-ifc-{}", uuid::Uuid::new_v4());
