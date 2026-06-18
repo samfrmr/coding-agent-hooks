@@ -1,0 +1,5 @@
+[toolchain]
+# Edition 2024 requires Cargo/rustc >= 1.85. Pin to a recent stable so the
+# rustup-managed toolchain is used even when an older distro `cargo` is on PATH.
+channel = "stable"
+components = ["rustfmt", "clippy"]
