@@ -2,7 +2,7 @@
 #
 # A single label template with sensitivity categories for classifying data
 # based on Microsoft Purview sensitivity labels (Public, Internal, Confidential,
-# Highly Confidential). Uses the gpt-oss-safeguard Harmony prompt format.
+# Highly Confidential). Uses the safeguard Harmony prompt format.
 #
 # See: https://learn.microsoft.com/en-us/purview/sensitivity-labels
 

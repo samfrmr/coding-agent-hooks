@@ -1,7 +1,7 @@
 //! Sensitivity label templates for data classification.
 //!
-//! This module defines sensitivity label templates following the gpt-oss-safeguard
-//! model format, analogous to the policy template system. Labels define categories
+//! This module defines sensitivity label templates following the safeguard
+//! prompt format, analogous to the policy template system. Labels define categories
 //! for classifying data sensitivity based on Microsoft Purview sensitivity labels.
 
 use crate::DataClassificationError;
@@ -111,7 +111,7 @@ pub struct LabelExample {
     pub label: Label,
 }
 
-/// A sensitivity label template following the gpt-oss-safeguard Harmony prompt format
+/// A sensitivity label template following the safeguard Harmony prompt format
 /// with multi-category sensitivity tiers.
 ///
 /// Each template defines a set of [`LabelCategory`] tiers mapping to [`Label`] values.

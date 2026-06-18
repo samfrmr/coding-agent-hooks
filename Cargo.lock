@@ -3622,23 +3622,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ollama-rs"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f647d8676b95a6b6205e11453c9fac338d73c9cdcc011c94d1ba9c9bfea582cd"
-dependencies = [
- "async-stream",
- "log",
- "reqwest",
- "schemars 1.2.1",
- "serde",
- "serde_json",
- "static_assertions",
- "thiserror 2.0.18",
- "url",
-]
-
-[[package]]
 name = "once_cell"
 version = "1.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5255,6 +5238,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fef461faaeb36c340b6c887167a9054a034f6acfc50a014ead26a02b4356b3de"
 
 [[package]]
+name = "sondera-anthropic"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "schemars 1.2.1",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "sondera-claude"
 version = "0.1.0"
 dependencies = [
@@ -5338,7 +5334,6 @@ dependencies = [
  "dirs 6.0.0",
  "fjall",
  "futures",
- "ollama-rs",
  "schemars 1.2.1",
  "serde",
  "serde_json",
@@ -5378,10 +5373,10 @@ dependencies = [
 name = "sondera-information-flow-control"
 version = "0.1.0"
 dependencies = [
- "ollama-rs",
  "schemars 1.2.1",
  "serde",
  "serde_json",
+ "sondera-anthropic",
  "strum 0.27.2",
  "strum_macros 0.27.2",
  "thiserror 2.0.18",
@@ -5411,10 +5406,10 @@ name = "sondera-policy"
 version = "0.1.0"
 dependencies = [
  "clap",
- "ollama-rs",
  "schemars 1.2.1",
  "serde",
  "serde_json",
+ "sondera-anthropic",
  "strum 0.27.2",
  "strum_macros 0.27.2",
  "thiserror 2.0.18",

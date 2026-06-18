@@ -27,7 +27,6 @@ anyhow = "1.0"
 dirs = "6"
 fjall = "3"
 turso = "0.4"
-ollama-rs = { version = "0.3", features = [] }
 schemars = { version = "1.2", features = ["preserve_order"] }
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros", "sync"] }
 thiserror = "2"
