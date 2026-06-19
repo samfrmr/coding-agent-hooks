@@ -44,6 +44,11 @@ async fn main() -> Result<()> {
         .with_span_events(FmtSpan::CLOSE)
         .init();
 
+    // Load ~/.sondera/env so the LLM-based classifiers can read ANTHROPIC_API_KEY.
+    // The Anthropic API call happens server-side during adjudication, so the key
+    // must be present in this process's environment regardless of how it was launched.
+    load_sondera_env();
+
     let socket_path = args.socket.unwrap_or_else(rpc::default_socket_path);
 
     tracing::info!("Loading policies from {:?}", args.policy_path);
@@ -53,4 +58,23 @@ async fn main() -> Result<()> {
     rpc::serve(harness, &socket_path).await?;
 
     Ok(())
+}
+
+/// Load environment from `~/.sondera/env` if it exists, mirroring the hook clients
+/// so the server picks up `ANTHROPIC_API_KEY` (and any other secrets) no matter how
+/// it is launched. A missing file is not an error — the key may already be exported.
+fn load_sondera_env() {
+    let Some(env_path) = dirs::home_dir().map(|h| h.join(".sondera").join("env")) else {
+        tracing::warn!("Could not determine home directory; skipping ~/.sondera/env");
+        return;
+    };
+    if env_path.exists() {
+        if let Err(e) = dotenvy::from_path(&env_path) {
+            tracing::warn!("Failed to load {:?}: {}", env_path, e);
+        } else {
+            tracing::debug!("Loaded environment from {:?}", env_path);
+        }
+    } else {
+        tracing::debug!("No environment file at {:?}", env_path);
+    }
 }
