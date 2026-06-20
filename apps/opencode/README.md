@@ -1,21 +1,16 @@
-# opencode-sondera
+# opencode plugin
 
-[![CI](https://github.com/Daviey/opencode-sondera/actions/workflows/ci.yml/badge.svg)](https://github.com/Daviey/opencode-sondera/actions/workflows/ci.yml)
-[![Security](https://github.com/Daviey/opencode-sondera/actions/workflows/security.yml/badge.svg)](https://github.com/Daviey/opencode-sondera/actions/workflows/security.yml)
-[![codecov](https://codecov.io/github/Daviey/opencode-sondera/graph/badge.svg?token=NS2GU7WBS3)](https://codecov.io/github/Daviey/opencode-sondera)
-[![Release](https://github.com/Daviey/opencode-sondera/actions/workflows/publish.yml/badge.svg)](https://github.com/Daviey/opencode-sondera/actions/workflows/publish.yml)
-[![npm](https://img.shields.io/npm/v/opencode-sondera)](https://www.npmjs.com/package/opencode-sondera)
-[![GitHub Release](https://img.shields.io/github/v/release/Daviey/opencode-sondera)](https://github.com/Daviey/opencode-sondera/releases)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Daviey/opencode-sondera/badge)](https://scorecard.dev/viewer/?uri=github.com/Daviey/opencode-sondera)
-
-A policy enforcement plugin for [opencode](https://opencode.ai) that screens every tool call against rules you define.
+The [opencode](https://opencode.ai) integration for
+[Coding Agent Hooks by Sondera](../../README.md): a policy enforcement plugin that
+screens every tool call against rules you define. Lives in this workspace as the
+`sondera-opencode` adapter crate (`apps/opencode`) plus the TypeScript plugin
+(`apps/opencode/plugin`).
 
 ## Why
 
 AI coding agents can run any shell command, read any file, and fetch any URL. Most of the time that is fine. Sometimes it is not. A typo in a prompt can produce `rm -rf /` instead of `rm -rf ./build`. An agent working on a public repo might follow a link to an internal service. A compromised dependency could instruct the model to exfiltrate environment variables.
 
-opencode-sondera sits between opencode and the tools it calls. Every tool invocation (shell commands, file reads and writes, web fetches, searches) is checked against a policy before it runs. Denied calls are blocked. Suspicious calls are logged. Allowed calls proceed without intervention.
+This plugin sits between opencode and the tools it calls. Every tool invocation (shell commands, file reads and writes, web fetches, searches) is checked against a policy before it runs. Denied calls are blocked. Suspicious calls are logged. Allowed calls proceed without intervention.
 
 Policies are written in [Cedar](https://www.cedarpolicy.com/), Amazon's open source policy language. Cedar policies are declarative, readable, and auditable. A sample policy that blocks destructive shell commands:
 
@@ -28,55 +23,62 @@ permit(
 when { !resource.command.contains("rm -rf") };
 ```
 
-The [Sondera harness server](https://github.com/sondera-ai/sondera-coding-agent-hooks) evaluates these policies. It bundles a Cedar engine with optional YARA rule scanning and LLM-based classification for commands that fall into grey areas. The harness runs as a local process; no data leaves your machine unless you configure an external classifier.
+The Sondera harness server (the `sondera-harness` crate in this workspace) evaluates these policies. YARA signature scanning and Cedar evaluation are deterministic and run locally. The optional LLM-based classifiers (data sensitivity, secure code policy) call the [Anthropic API](https://www.anthropic.com/) (`claude-haiku-4-5` by default), so content sent for classification leaves your machine for `api.anthropic.com`; they require `ANTHROPIC_API_KEY`. See the [project README](../../README.md) for the full pipeline.
 
 This plugin is the glue between opencode and the harness. It normalises tool calls into a common format, sends them for adjudication, and enforces the decision.
 
 ## Prerequisites
 
 - [opencode](https://opencode.ai) with plugin support
-- [Sondera harness server](https://github.com/sondera-ai/sondera-coding-agent-hooks) (can be auto-started, see below)
+- The Sondera harness server, built from this workspace (can be auto-started, see below)
+- [Rust](https://www.rust-lang.org/) toolchain and [Bun](https://bun.sh/) to build the adapter and plugin
 
 ## Install
 
-### Quick install (curl)
+Two pieces need to be available: the **adapter binary** (`sondera-opencode-adapter`)
+and the **plugin** that opencode loads. Building from this workspace is the canonical
+path; a published npm package (`opencode-sondera`) is also available.
+
+### Build the adapter from source
+
+The adapter lives in this repository as the `sondera-opencode` workspace crate, so it
+builds against the in-tree harness — no separate clone required.
 
 ```bash
-curl -fsSL https://github.com/Daviey/opencode-sondera/raw/main/install.sh | bash
+# From the repository root (requires pkg-config and libssl-dev):
+cargo build --release -p sondera-opencode
+
+# Put the binary on PATH (the plugin looks here by default):
+cp target/release/sondera-opencode-adapter ~/.local/bin/
 ```
 
-This downloads the latest adapter binary and plugin for your platform, validates them, and installs to `~/.local/bin/` and `~/.config/opencode/plugins/`. opencode auto-loads `.ts` files from the plugins directory.
+### Install the plugin into opencode
 
-### npm
+The plugin is a single bundled TypeScript file generated from `plugin/src/`:
+
+```bash
+# From the repository root:
+(cd apps/opencode/plugin && bun run sync-bundle)   # regenerates sondera-bundled.ts
+```
+
+opencode auto-loads `.ts` files from `~/.config/opencode/plugins/`, so copy the bundle
+there:
+
+```bash
+cp apps/opencode/plugin/sondera-bundled.ts ~/.config/opencode/plugins/sondera.ts
+```
+
+Alternatively, install the published package and reference it in `opencode.json`:
 
 ```bash
 npm install opencode-sondera
 ```
-
-Then reference it in your opencode config:
 
 ```json
 // opencode.json
 {
   "plugin": ["opencode-sondera"]
 }
-```
-
-### Build the adapter from source
-
-You need this if you want to hack on the adapter or your platform has no pre-built binary.
-The adapter now lives in this repository as the `sondera-opencode` workspace crate, so it
-builds against the in-tree harness — no separate clone required.
-
-```bash
-# From the repository root (requires pkg-config and libssl-dev):
-cargo build --release -p sondera-opencode
-```
-
-Then put the binary on PATH:
-
-```bash
-cp target/release/sondera-opencode-adapter ~/.local/bin/
 ```
 
 ### Start the harness server
@@ -111,7 +113,7 @@ Add `harnessPath` and `policiesPath` to your project config (`.opencode/sondera.
 ```json
 {
   "harnessPath": "/path/to/sondera-harness-server",
-  "policiesPath": "/path/to/sondera-coding-agent-hooks/policies"
+  "policiesPath": "/path/to/coding-agent-hooks/policies"
 }
 ```
 
@@ -183,7 +185,7 @@ Create `.opencode/sondera.json` or `sondera.json` in your project root:
   "dryRun": false,
   "strictMode": false,
   "harnessPath": "/path/to/sondera-harness-server",
-  "policiesPath": "/path/to/sondera-coding-agent-hooks/policies",
+  "policiesPath": "/path/to/coding-agent-hooks/policies",
   "allowPatterns": ["git status", "git diff", "git log"],
   "auditLogPath": "/tmp/sondera-audit.jsonl",
   "adjudicateTimeoutMs": 5000

@@ -2,6 +2,11 @@
 
 Date: 2025-03
 
+> **Update (2026-06):** This integration now lives in the same monorepo as the harness
+> (`apps/opencode`), so "the harness" is no longer a separate upstream repo. The
+> two-part bridge decision still stands — opencode runs on Bun and cannot speak tarpc
+> directly — but the adapter builds against the in-workspace `sondera-harness` crate.
+
 ## Context
 
 opencode's plugin system runs JavaScript/TypeScript via Bun. The Sondera harness server communicates over tarpc (a Rust-specific RPC framework) via Unix domain sockets.
