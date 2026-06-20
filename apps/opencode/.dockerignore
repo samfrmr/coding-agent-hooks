@@ -1,7 +1,0 @@
-adapter/target
-node_modules
-coverage
-sondera-bundled.ts
-.git
-*.nix
-docs

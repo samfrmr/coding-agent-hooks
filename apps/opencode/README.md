@@ -65,48 +65,30 @@ Then reference it in your opencode config:
 ### Build the adapter from source
 
 You need this if you want to hack on the adapter or your platform has no pre-built binary.
-
-**Using nix-shell:**
-
-```bash
-cd ..
-git clone https://github.com/sondera-ai/sondera-coding-agent-hooks.git
-```
-
-> **Note:** The `--deterministic-only` flag is required for fast startup without Ollama. Until [upstream issue #8](https://github.com/sondera-ai/sondera-coding-agent-hooks/issues/8) is merged, use the [fork branch](https://github.com/Daviey/sondera-coding-agent-hooks/tree/feat/deterministic-only) instead:
-> ```bash
-> git clone -b feat/deterministic-only https://github.com/Daviey/sondera-coding-agent-hooks.git
-> ```
+The adapter now lives in this repository as the `sondera-opencode` workspace crate, so it
+builds against the in-tree harness — no separate clone required.
 
 ```bash
-cp -r opencode/sondera/adapter sondera-coding-agent-hooks/apps/opencode
-cd sondera-coding-agent-hooks
-nix-shell ../opencode/sondera/shell.nix --run \
-  "cargo build --bin sondera-opencode-adapter"
-```
-
-**Without nix (requires `pkg-config` and `libssl-dev`):**
-
-```bash
-cd adapter
-cargo build --release
+# From the repository root (requires pkg-config and libssl-dev):
+cargo build --release -p sondera-opencode
 ```
 
 Then put the binary on PATH:
 
 ```bash
-cp target/debug/sondera-opencode-adapter ~/.local/bin/
+cp target/release/sondera-opencode-adapter ~/.local/bin/
 ```
 
 ### Start the harness server
 
 You can start the harness manually, or let the plugin auto-start it on first tool call.
+The harness server is the `sondera-harness` crate in this same workspace.
 
 **Manual start:**
 
 ```bash
-cd ../sondera-coding-agent-hooks
-./target/debug/sondera-harness-server --deterministic-only -v
+# From the repository root:
+cargo run --bin sondera-harness-server -- -v
 ```
 
 **Auto-start (recommended):**
