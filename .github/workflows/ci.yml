@@ -76,6 +76,27 @@ jobs:
         run: cargo audit --deny warnings --ignore RUSTSEC-2023-0071 --ignore RUSTSEC-2025-0141 --ignore RUSTSEC-2024-0436 --ignore RUSTSEC-2025-0134
 
 
+  opencode-plugin:
+    name: opencode plugin (TypeScript)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/opencode/plugin
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install plugin deps
+        run: bun install
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Unit tests
+        run: bun test src/index.test.ts src/client.test.ts src/config.test.ts src/metrics.test.ts src/normalize.test.ts
+
   build-apps:
     name: Build app binaries (${{ matrix.os }} - ${{ matrix.target }})
     runs-on: ${{ matrix.os }}
@@ -110,13 +131,14 @@ jobs:
             -p sondera-copilot \
             -p sondera-cursor \
             -p sondera-gemini \
+            -p sondera-opencode \
             -p sondera-harness
 
       - name: Create archive
         run: |
           tar -czvf sondera-${{ matrix.target }}.tar.gz \
             -C target/${{ matrix.target }}/release \
-            sondera-claude sondera-copilot sondera-cursor sondera-gemini sondera-harness-server
+            sondera-claude sondera-copilot sondera-cursor sondera-gemini sondera-opencode-adapter sondera-harness-server
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

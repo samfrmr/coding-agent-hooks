@@ -5,6 +5,7 @@ members = [
     "apps/copilot",
     "apps/cursor",
     "apps/gemini",
+    "apps/opencode",
     "crates/guardrails/anthropic",
     "crates/guardrails/ifc",
     "crates/guardrails/policy",

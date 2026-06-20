@@ -12,7 +12,8 @@ LLM-based classifiers (data sensitivity, secure code policy) are probabilistic.
 Works with [Claude Code](https://code.claude.com/docs/en/hooks),
 [Cursor](https://cursor.com/docs/agent/hooks),
 [GitHub Copilot](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/use-hooks),
-and [Gemini CLI](https://geminicli.com/docs/hooks/).
+[Gemini CLI](https://geminicli.com/docs/hooks/),
+and [opencode](https://opencode.ai) (via the plugin in `apps/opencode`).
 
 ## Getting Started
 
@@ -196,6 +197,7 @@ identically across all four agents.
 | `apps/cursor`                 | Cursor hooks                                                         |
 | `apps/copilot`                | GitHub Copilot hooks                                                 |
 | `apps/gemini`                 | Gemini CLI hooks                                                     |
+| `apps/opencode`               | opencode adapter binary + TypeScript plugin (`apps/opencode/plugin`) |
 
 ## Development
 
