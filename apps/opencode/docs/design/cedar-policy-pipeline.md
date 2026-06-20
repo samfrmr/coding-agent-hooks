@@ -15,7 +15,7 @@ The harness evaluates each event against roughly 70 Cedar policies organized in 
 Policies use context from three sources:
 
 1. YARA signatures: severity levels and categories matched against command content
-2. Ollama classifiers: data sensitivity label (Public/Internal/Confidential/HighlyConfidential) and code compliance assessment. Both fall back to safe defaults when Ollama is not running.
+2. Anthropic classifiers: data sensitivity label (Public/Internal/Confidential/HighlyConfidential) and code compliance assessment. Both fall back to safe defaults when `ANTHROPIC_API_KEY` is unavailable.
 3. Trajectory state: taint tracking, step count, and prior decisions within the session
 
 ## Policy loading

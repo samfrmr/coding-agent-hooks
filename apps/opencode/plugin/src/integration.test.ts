@@ -1,22 +1,38 @@
 import { describe, test, expect, beforeAll, afterAll } from "bun:test"
 import { existsSync, mkdirSync, rmSync, writeFileSync, copyFileSync } from "fs"
 import { join } from "path"
+import { tmpdir } from "os"
 
-const HARNESS_REPO = process.env.SONDERA_HARNESS_REPO || join(import.meta.dir, "../../sondera-coding-agent-hooks")
+// In the monorepo the workspace root is four levels up from this file
+// (apps/opencode/plugin/src). Override with SONDERA_HARNESS_REPO when the harness
+// lives elsewhere (e.g. a standalone checkout).
+const HARNESS_REPO = process.env.SONDERA_HARNESS_REPO || join(import.meta.dir, "../../../..")
 const PLUGIN_ROOT = join(import.meta.dir, "..")
-function findAdapter(): string {
-  const candidates = [
-    join(PLUGIN_ROOT, "adapter/target/debug/sondera-opencode-adapter"),
-    join(HARNESS_REPO, "target/debug/sondera-opencode-adapter"),
-    join(HARNESS_REPO, "apps/opencode/target/debug/sondera-opencode-adapter"),
-  ]
+const HOME = process.env.HOME || "/tmp"
+function findFirst(candidates: string[]): string {
   return candidates.find(p => existsSync(p)) || candidates[0]
 }
+function findAdapter(): string {
+  // Prefer release, then debug, then the locally-installed binary.
+  return findFirst([
+    join(HARNESS_REPO, "target/release/sondera-opencode-adapter"),
+    join(HARNESS_REPO, "target/debug/sondera-opencode-adapter"),
+    join(PLUGIN_ROOT, "adapter/target/debug/sondera-opencode-adapter"),
+    join(HOME, ".local/bin/sondera-opencode-adapter"),
+  ])
+}
 const ADAPTER_BIN = process.env.SONDERA_ADAPTER_BIN || findAdapter()
-const HARNESS_BIN = join(HARNESS_REPO, "target/debug/sondera-harness-server")
+const HARNESS_BIN = process.env.SONDERA_HARNESS_BIN || findFirst([
+  join(HARNESS_REPO, "target/release/sondera-harness-server"),
+  join(HARNESS_REPO, "target/debug/sondera-harness-server"),
+])
 const POLICY_PATH = join(HARNESS_REPO, "policies")
-const SOCKET_PATH = process.env.SONDERA_SOCKET || join(process.env.HOME || "/tmp", ".sondera/sondera-harness.sock")
-const SONDERA_DIR = join(process.env.HOME || "/tmp", ".sondera")
+// Run the harness in a throwaway HOME so the destructive cleanup below can never
+// touch the developer's real ~/.sondera (which holds ANTHROPIC_API_KEY, trajectories,
+// and entities). The harness derives its data dir from $HOME.
+const TEST_HOME = process.env.SONDERA_TEST_HOME || join(tmpdir(), "sondera-int-test-home")
+const SONDERA_DIR = join(TEST_HOME, ".sondera")
+const SOCKET_PATH = process.env.SONDERA_SOCKET || join(SONDERA_DIR, "sondera-harness.sock")
 const TEST_DENY_POLICY = join(import.meta.dir, "policies/test-deny.cedar")
 
 let harnessProc: ReturnType<typeof Bun.spawn> | null = null
@@ -98,8 +114,8 @@ describe("integration: adapter + harness", () => {
     const socketDir = SOCKET_PATH.substring(0, SOCKET_PATH.lastIndexOf("/"))
     mkdirSync(socketDir, { recursive: true })
 
-    harnessProc = Bun.spawn([HARNESS_BIN, "--deterministic-only", "--policy-path", POLICY_PATH, "--socket", SOCKET_PATH], {
-      env: { ...process.env, RUST_LOG: "info" },
+    harnessProc = Bun.spawn([HARNESS_BIN, "--policy-path", POLICY_PATH, "--socket", SOCKET_PATH], {
+      env: { ...process.env, RUST_LOG: "info", HOME: TEST_HOME },
       stderr: "pipe",
       stdout: "pipe",
     })
@@ -148,7 +164,7 @@ describe("integration: adapter + harness", () => {
     expect(result.decision).toBe("allow")
   })
 
-  test("benign test command is denied by test policy (Cedar-only, no Ollama)", async () => {
+  test("benign test command is denied by test policy (Cedar-only, no LLM)", async () => {
     if (!cedarDenyWorks) return
     const result = await adjudicate({
       tool: "bash", action: "ShellCommand",

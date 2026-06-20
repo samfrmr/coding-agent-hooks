@@ -47,9 +47,9 @@
   |   1. Receive Event via tarpc                |
   |   2. Store event in trajectory DB           |
   |   3. YARA signature scan on content         |
-  |   4. Ollama data sensitivity classify       |
+  |   4. Anthropic data sensitivity classify    |
   |      (graceful fallback to Public)          |
-  |   5. Ollama secure code policy eval         |
+  |   5. Anthropic secure code policy eval      |
   |      (graceful fallback to compliant)       |
   |   6. Build Cedar authorization request      |
   |   7. Evaluate against Cedar policies        |

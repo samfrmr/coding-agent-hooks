@@ -88,8 +88,21 @@ The harness server is the `sondera-harness` crate in this same workspace.
 
 ```bash
 # From the repository root:
-cargo run --bin sondera-harness-server -- -v
+cargo run --release --bin sondera-harness-server -- -v
 ```
+
+The server runs the **Anthropic LLM classifiers** (data-sensitivity labeling and
+secure-code policy evaluation) alongside Cedar + YARA. It reads `ANTHROPIC_API_KEY`
+from `~/.sondera/env` (or the environment).
+
+> **`ANTHROPIC_API_KEY` is required for enforcement.** When the key is missing, the
+> classifier call errors and the adjudication currently fails open to `allow` — this
+> bypasses Cedar deny policies too, so the harness effectively allows everything.
+> Make sure `~/.sondera/env` contains your key before relying on policy enforcement.
+
+> Always (re)build the harness server from this workspace. A stale binary built before
+> the Anthropic migration links the old Ollama backend and will emit Ollama connection
+> errors. `strings $(which sondera-harness-server) | grep anthropic-version` should match.
 
 **Auto-start (recommended):**
 
@@ -144,7 +157,7 @@ nix build .#sondera-opencode-adapter
 | `SONDERA_ALLOW_PATTERNS` | (none) | Comma-separated regex patterns to bypass adjudication |
 | `SONDERA_AUDIT_LOG` | (none) | Path to JSONL file for adjudication audit trail |
 | `SONDERA_ADJUDICATE_TIMEOUT_MS` | `5000` | Milliseconds before adjudication is aborted (fail-open) |
-| `SONDERA_DETERMINISTIC_ONLY` | `true` | Set to `false` to enable LLM classifiers (requires Ollama) |
+| `ANTHROPIC_API_KEY` | (none) | Required by the harness server for the Anthropic classifiers (read from `~/.sondera/env` or the environment). |
 
 ### Strict Mode
 
@@ -173,8 +186,7 @@ Create `.opencode/sondera.json` or `sondera.json` in your project root:
   "policiesPath": "/path/to/sondera-coding-agent-hooks/policies",
   "allowPatterns": ["git status", "git diff", "git log"],
   "auditLogPath": "/tmp/sondera-audit.jsonl",
-  "adjudicateTimeoutMs": 5000,
-  "deterministicOnly": true
+  "adjudicateTimeoutMs": 5000
 }
 ```
 
@@ -220,7 +232,7 @@ The harness server loads Cedar policies from a directory at startup (via `--poli
 
 ```bash
 # Start a per-project harness with custom policies
-sondera-harness-server --deterministic-only --policy-path ./my-policies/ --socket /tmp/sondera-project.sock
+sondera-harness-server --policy-path ./my-policies/ --socket /tmp/sondera-project.sock
 
 # Point the adapter at the custom socket
 SONDERA_SOCKET=/tmp/sondera-project.sock opencode
@@ -291,7 +303,7 @@ Specifically (default/fail-open mode):
 - Old adapter binary without `stream` command: auto-fall back to oneshot
 - Harness server not reachable and auto-start not configured: plugin disables itself (warns once)
 - Harness server not reachable and auto-start configured: plugin spawns the server, waits, then retries
-- Harness returns an error (e.g., Ollama not running): allow
+- Harness returns an error (e.g., classifier API unavailable): allow
 - Any unhandled exception in the plugin: allow
 
 ## Error Types
@@ -316,8 +328,8 @@ $ echo '{"tool":"bash","action":"ShellCommand","trajectory_id":"test","agent_id"
 ```
 
 Release binary: 14MB, tested with harness server running (Cedar + YARA pipeline confirmed).
-When Ollama is not running, the harness returns an error and the plugin correctly
-defaults to allow.
+When the Anthropic classifier API is unavailable (missing `ANTHROPIC_API_KEY` or a
+timeout), the harness fails open and the plugin correctly defaults to allow.
 
 ## License
 

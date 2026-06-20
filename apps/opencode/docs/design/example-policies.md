@@ -9,7 +9,7 @@ Cedar uses a default-permit model with targeted `forbid` overrides. A single mat
 Each tool call gets a `context` populated by three sources:
 
 - **YARA signatures**: pattern matching on command strings, file content, and URLs. Provides `severity` (0-4) and `categories` (e.g. `exfiltration`, `command_injection`, `obfuscation`).
-- **Ollama classifiers** (optional): data sensitivity labels (`Public`, `Internal`, `Confidential`, `HighlyConfidential`) and code policy compliance checks. Falls back to safe defaults when Ollama is not running.
+- **Anthropic classifiers** (optional): data sensitivity labels (`Public`, `Internal`, `Confidential`, `HighlyConfidential`) and code policy compliance checks. Falls back to safe defaults when `ANTHROPIC_API_KEY` is unavailable.
 - **Trajectory state**: taint tracking, step count, and the high-water-mark sensitivity label across the session.
 
 ## What the Default Policies Block
@@ -176,7 +176,7 @@ sondera-harness-server --policy-path ./my-policies/ --socket /tmp/sondera-custom
 context.signature.matches      // number of YARA matches
 context.signature.severity     // 0=None 1=Low 2=Medium 3=High 4=Critical
 context.signature.categories   // Set<String> of YARA categories
-context.policy.compliant       // bool from Ollama code evaluation
+context.policy.compliant       // bool from Anthropic code evaluation
 context.policy.violations      // Set<String> of violation codes (SC2-SC7)
 context.label                  // sensitivity label on this request
 context.command                // shell command string
@@ -298,4 +298,4 @@ rm policies/900-test-deny.cedar
 
 - `echo sondera-deny-test` is harmless. If Sondera fails open (the default), the command runs and prints a string. No risk.
 - The LLM has no reason to refuse `echo` with a test string, so the command reaches the tool layer where Sondera intercepts it.
-- The policy matches on the command string, so no YARA signatures or Ollama classifiers are needed. Works with just Cedar.
+- The policy matches on the command string, so no YARA signatures or LLM classifiers are needed. Works with just Cedar.
